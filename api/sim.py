@@ -1,12 +1,5 @@
 import random
 
-json = {
-  "name": "Messi",
-  "overall": 95,
-  "team": "Barcelona",
-  "position": "ST"
-}
-
 class Player:
   def __init__(self, name, overall, team, position):
     self.name = name
@@ -23,11 +16,11 @@ class Team:
     self.color = color
     self.players = players
     self.goalkeeper = [i for i in self.players if i.position == "GK"]
-    self.defenseLine = [i for i in self.players if i.position == "CB" or i.position == "FB"]
+    self.defenseLine = [i for i in self.players if i.position in ["CB"," FB"]]
     self.backMidfieldLine = [i for i in self.players if i.position == "CDM"]
-    self.midfieldLine = [i for i in self.players if i.position == "CM" or i.position == "WM"]
-    self.frontMidfieldLine = [i for i in self.players if i.position == "CAM" or i.position == "WAM"]
-    self.attackLine = [i for i in self.players if i.position == "ST" or i.position == "CF" or i.position == "FW"]
+    self.midfieldLine = [i for i in self.players if i.position in ["CM", "WM"]]
+    self.frontMidfieldLine = [i for i in self.players if i.position in ["CAM","WAM"]]
+    self.attackLine = [i for i in self.players if i.position in ["ST", "CF", "FW"]]
 
     self.defending = round((sum([i.overall for i in self.goalkeeper]) + sum([i.overall for i in self.defenseLine]) + sum([i.overall for i in self.backMidfieldLine])) / (len(self.defenseLine) + len(self.backMidfieldLine) + len(self.goalkeeper)))
     self.control = round((sum([i.overall for i in self.frontMidfieldLine if i.position == "CAM"]) + sum([i.overall for i in self.midfieldLine]) + sum([i.overall for i in self.backMidfieldLine])) / (len([i.overall for i in self.frontMidfieldLine if i.position == "CAM"]) + len(self.midfieldLine) + len(self.backMidfieldLine)))
@@ -92,45 +85,3 @@ def game(team1, team2):
   print()
   print(f"Final: {team1.name} {score[0]} - {score[1]} {team2.name}")
 
-barcelona = Team("Barcelona", "blue", [
-  Player("Messi", 95, "Barcelona", "ST"),
-  Player("Pique", 85, "Barcelona", "CB"),
-  Player("Busquets", 88, "Barcelona", "CDM"),
-  Player("De Jong", 86, "Barcelona", "CM"),
-  Player("Dembele", 84, "Barcelona", "WM"),
-  Player("Griezmann", 87, "Barcelona", "CF")
-])
-
-madrid = Team("Real Madrid", "white", [
-  Player("Benzema", 89, "Real Madrid", "ST"),
-  Player("Ramos", 88, "Real Madrid", "CB"),
-  Player("Casemiro", 87, "Real Madrid", "CDM"),
-  Player("Modric", 87, "Real Madrid", "CM"),
-  Player("Vinicius", 85, "Real Madrid", "WM"),
-  Player("Asensio", 84, "Real Madrid", "WAM")
-])
-
-print(barcelona.name, ": ")
-print("Defensa", barcelona.defending)
-print("Control", barcelona.control)
-print("Ataque", barcelona.attacking)
-
-print()
-
-print(madrid.name, ": ")
-print("Defensa", madrid.defending)
-print("Control", madrid.control)
-print("Ataque", madrid.attacking)
-
-print()
-
-game(barcelona, madrid)
-
-
-# attacking es la capacidad de un equipo de marcar goles
-# control es la capacidad de un equipo de crear oportunidades de gol
-# defending es la capacidad de un equipo de evitar que el equipo contrario marque
-
-# con control se va a realizar más ataques, se determina una cantidad de numeros al azar que se generan en base al valor de control de un equipo. Esos valores no se pueden repetir entre ambos equipos. Se haze un random y si sale un numero que esta en las listas, se genera un ataque.
-
-# con attacking se determina si el ataque es exitoso o no. Se hace un random y si el numero es mayor al valor de attacking, el ataque es exitoso. La probabilidad de que un ataque sea exitoso es mayor si el valor de attacking se determina con una comparacion entre el valor de defending del equipo contrario.
