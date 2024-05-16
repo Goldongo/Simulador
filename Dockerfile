@@ -3,4 +3,4 @@ WORKDIR /goldongo
 RUN pip3 install --no-input -r libs.txt
 
 COPY . .
-CMD ["uvicorn", "api.main:app"]
+CMD ["python3", "sim_api.py"]
