@@ -39,9 +39,9 @@ class Team(BaseModel):
     self.control = round((sum([i.rating for i in self.frontMidfieldLine if i.position == "CAM"]) + sum([i.rating for i in self.midfieldLine]) + sum([i.rating for i in self.backMidfieldLine])) / (len([i.rating for i in self.frontMidfieldLine if i.position == "CAM"]) + len(self.midfieldLine) + len(self.backMidfieldLine)))
     self.attacking = round((sum([i.rating for i in self.midfieldLine if i.position == "WM"]) + sum([i.rating for i in self.frontMidfieldLine]) + sum([i.rating for i in self.attackLine])) / (len([i.rating for i in self.midfieldLine if i.position == "WM"]) + len(self.frontMidfieldLine) + len(self.attackLine)))
 
-@app.get("/teams/{team_name}")
-async def get_team(team_name: str):
-  url = f"localhost:8000/api/teams/{team_name}"  # Remplazar con el api
+@app.get("/teams/{id}")
+async def get_team(id: int):
+  url = f"localhost:8000/api/teams/{id}"  # Remplazar con el api
   
   async with httpx.AsyncClient() as client:
     response = await client.get(url)
@@ -85,10 +85,10 @@ def game(team1: Team, team2: Team):
     time += 1
   return score
 
-@app.post("/game/{team1_name}/{team2_name}")
-async def simulate_game(team1_name: str, team2_name: str):
-  team1 = await get_team(team1_name)
-  team2 = await get_team(team2_name)
+@app.post("/game/{team1_id}/{team2_id}")
+async def simulate_game(team1_id: int, team2_id: int):
+  team1 = await get_team(team1_id)
+  team2 = await get_team(team2_id)
   
   score = game(team1, team2)
   return {"result": f"{team1.name} {score[0]} - {score[1]} {team2.name}"}
