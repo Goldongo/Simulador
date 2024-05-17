@@ -85,7 +85,10 @@ def game(team1: Team, team2: Team):
     time += 1
   return score
 
-@app.post("/game/{team1}/{team2}")
-async def simulate_game(team1: Team, team2: Team):
+@app.post("/game/{team1_name}/{team2_name}")
+async def simulate_game(team1_name: str, team2_name: str):
+  team1 = await get_team(team1_name)
+  team2 = await get_team(team2_name)
+  
   score = game(team1, team2)
   return {"result": f"{team1.name} {score[0]} - {score[1]} {team2.name}"}
