@@ -1,6 +1,8 @@
 FROM python:3-slim
 WORKDIR /goldongo
-RUN pip3 install --no-input -r libs.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-CMD ["python3", "sim_api.py"]
+COPY api /app
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

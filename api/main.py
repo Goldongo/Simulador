@@ -1,4 +1,10 @@
+from fastapi import FastAPI, HTTPException
+import requests
+from requests.exceptions import RequestException
 import random
+
+app = FastAPI()
+
 
 class Player:
   def __init__(self, name, overall, team, position):
@@ -9,6 +15,7 @@ class Player:
 
   def __str__(self):
     return f"Name: {self.name}, Overall: {self.overall}"
+
 
 class Team:
   def __init__(self, name, color, players):
@@ -28,15 +35,18 @@ class Team:
     self.attacking = self.calculate_average(["CM", "CAM", "AT"])
 
   def calculate_average(self, positions):
-    total_overall = sum([player.overall for pos in positions for player in self.lines[pos]])
+    total_overall = sum(
+      [player.overall for pos in positions for player in self.lines[pos]])
     total_players = sum([len(self.lines[pos]) for pos in positions])
     return round(total_overall / total_players) if total_players else 0
 
   def __str__(self):
     return f"Name: {self.name}, Players: [{', '.join([str(p) for p in self.players])}]"
 
+
 def no_repeat(array1, array2):
   return not set(array1).intersection(set(array2))
+
 
 ATT_WEIGHTS = {
   "GK": 0.1,
@@ -65,6 +75,7 @@ CRE_WEIGHTS = {
   "AT": 9
 }
 
+
 def check_lines(team, situation):
   weights_map = {
     "attacking": ATT_WEIGHTS,
@@ -75,13 +86,39 @@ def check_lines(team, situation):
   weights = [weights_map[situation][line] for line in lines]
   return lines, weights
 
-def game(team1, team2):
+
+def getTeam(team_id):
+  try:
+    response = requests.get(f"http://127.0.0.1:8000/team/{team_id}") # Cambiar a la dirección de la API de equipos
+    response.raise_for_status()
+    data = response.json()
+    players = [Player(**player) for player in data['players']]
+    return Team(name=data['name'], color=data['color'], players=players)
+  except RequestException as e:
+    print(f"Error fetching team data: {e}")
+    return None
+
+
+@app.get("/game/{team1ID}/{team2ID}")
+def game(team1ID: int, team2ID: int):
+  team1 = getTeam(team1ID)
+  team2 = getTeam(team2ID)
+
+  if not team1 or not team2:
+    raise HTTPException(
+      status_code=404, detail="One or both teams not found")
+
+  output = {
+    "events": [],
+    "team1_events": [],
+    "team2_events": [],
+    "final_score": {}
+  }
+
   BASE_ATTACKS_NUM = 8
   regularTime = 90
 
   score = [0, 0]
-  eventsT1 = []
-  eventsT2 = []
 
   team1Opportunities = random.sample(range(1, 100), team1.control // 10)
   team2Opportunities = random.sample(range(1, 100), team2.control // 10)
@@ -90,12 +127,16 @@ def game(team1, team2):
     team1Opportunities = random.sample(range(1, 100), team1.control // 10)
     team2Opportunities = random.sample(range(1, 100), team2.control // 10)
 
-  team1Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10)
-  team2Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10)
+  team1Attacks = random.sample(
+    range(1, 100), BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10)
+  team2Attacks = random.sample(
+    range(1, 100), BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10)
 
   while no_repeat(team1Attacks, team2Attacks):
-    team1Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10)
-    team2Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10)
+    team1Attacks = random.sample(
+      range(1, 100), BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10)
+    team2Attacks = random.sample(
+      range(1, 100), BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10)
 
   time = 0
 
@@ -109,62 +150,70 @@ def game(team1, team2):
   while time < regularTime:
     randNum = random.randint(1, 100)
     if randNum in team1Opportunities:
-      print(f"Minuto {time}")
-      print(f"{team1.name} tiene la posesión")
+      event = f"Minuto {time}: {team1.name} tiene la posesión"
+      output["events"].append(event)
       AssistantLine = random.choices(crTeam1Lines, crTeam1Weights)[0]
       Assistant = random.choice(team1.lines[AssistantLine])
-      possiblities = [f"Que pase de {Assistant.name}!!!", f"Centro de {Assistant.name}!!!"]
-      print(random.choice(possiblities))
+      possibilities = [
+        f"Que pase de {Assistant.name}!!!", f"Centro de {Assistant.name}!!!"]
+      event = random.choice(possibilities)
+      output["events"].append(event)
       randNum = random.randint(1, 100)
       if randNum in team1Attacks:
         score[0] += 1
-        goalscorerLine = random.choices(atTeam1Lines, atTeam1Weights)[0]
+        goalscorerLine = random.choices(
+            atTeam1Lines, atTeam1Weights)[0]
         goalscorer = random.choice(team1.lines[goalscorerLine])
         while goalscorer.name == Assistant.name:
-          goalscorer = random.choice(team1.lines[goalscorerLine])
-        print(f"GOOOOOL del {team1.name}!!!\n {goalscorer.name} a los {time} minutos")
-        eventsT1.append(f"  {goalscorer.name}, {time}")
-        eventsT1.append(f"    Asit. {Assistant.name}")
+            goalscorer = random.choice(team1.lines[goalscorerLine])
+        event = f"GOOOOOL del {team1.name}!!! {goalscorer.name} a los {time} minutos"
+        output["events"].append(event)
+        output["team1_events"].append(f"{goalscorer.name}, {time}")
+        output["team1_events"].append(f"Asist. {Assistant.name}")
       else:
         BlockLine = random.choices(deTeam2Lines, deTeam2Weights)[0]
         Block = random.choice(team2.lines[BlockLine])
         if Block.position == "GK":
-          print(f"Gran atajada de {Block.name}!!!")
+          event = f"Gran atajada de {Block.name}!!!"
         else:
-          possiblities = [f"Gran corte de {Block.name}!!!", f"Intercepción de {Block.name}!!!", f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
-          print(random.choice(possiblities))
-      print()
+          possibilities = [f"Gran corte de {Block.name}!!!", f"Intercepción de {Block.name}!!!",
+                            f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
+          event = random.choice(possibilities)
+        output["events"].append(event)
 
     if randNum in team2Opportunities:
-      print(f"Minuto {time}")
-      print(f"{team2.name} tiene la posesión")
+      event = f"Minuto {time}: {team2.name} tiene la posesión"
+      output["events"].append(event)
       AssistantLine = random.choices(crTeam2Lines, crTeam2Weights)[0]
       Assistant = random.choice(team2.lines[AssistantLine])
-      possiblities = [f"Que pase de {Assistant.name}!!!", f"Centro de {Assistant.name}!!!"]
-      print(random.choice(possiblities))
+      possibilities = [
+        f"Que pase de {Assistant.name}!!!", f"Centro de {Assistant.name}!!!"]
+      event = random.choice(possibilities)
+      output["events"].append(event)
       randNum = random.randint(1, 100)
       if randNum in team2Attacks:
         score[1] += 1
-        goalscorerLine = random.choices(atTeam2Lines, atTeam2Weights)[0]
+        goalscorerLine = random.choices(
+            atTeam2Lines, atTeam2Weights)[0]
         goalscorer = random.choice(team2.lines[goalscorerLine])
         while goalscorer.name == Assistant.name:
-          goalscorer = random.choice(team1.lines[goalscorerLine])
-        print(f"GOOOOOL del {team2.name}!!! \n {goalscorer.name} a los {time} minutos")
-        eventsT2.append(f"  {goalscorer.name}, {time}")
-        eventsT2.append(f"    Asit. {Assistant.name}")
+            goalscorer = random.choice(team1.lines[goalscorerLine])
+        event = f"GOOOOOL del {team2.name}!!! {goalscorer.name} a los {time} minutos"
+        output["events"].append(event)
+        output["team2_events"].append(f"{goalscorer.name}, {time}")
+        output["team2_events"].append(f"Asist. {Assistant.name}")
       else:
         BlockLine = random.choices(deTeam1Lines, deTeam1Weights)[0]
         Block = random.choice(team1.lines[BlockLine])
         if Block.position == "GK":
-          print(f"Gran atajada de {Block.name}!!!")
+          event = f"Gran atajada de {Block.name}!!!"
         else:
-          possiblities = [f"Gran corte de {Block.name}!!!", f"Intercepción de {Block.name}!!!", f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
-          print(random.choice(possiblities))
-      print()
+          possibilities = [f"Gran corte de {Block.name}!!!", f"Intercepción de {Block.name}!!!",
+                            f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
+          event = random.choice(possibilities)
+        output["events"].append(event)
+
     time += 1
 
-  print()
-  print(f"Final: {team1.name} {score[0]} - {score[1]} {team2.name}")
-
-  for i in range(max(len(eventsT1), len(eventsT2))):
-    print(eventsT1[i] if i < len(eventsT1) else "         ","         ",eventsT2[i] if i < len(eventsT2) else "")
+  output["final_score"] = {team1.name: score[0], team2.name: score[1]}
+  return output
