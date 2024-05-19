@@ -1,7 +1,7 @@
 FROM python:3-slim
 WORKDIR /goldongo
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r libs.txt
 
 COPY api /app
 EXPOSE 8000
