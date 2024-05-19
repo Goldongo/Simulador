@@ -1,6 +1,6 @@
 FROM python:3-slim
 WORKDIR /goldongo
-COPY requirements.txt .
+COPY libs.txt .
 RUN pip install --no-cache-dir -r libs.txt
 
 COPY api /app
