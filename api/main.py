@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body,status
 import random
 from schemas import Team, setUpTeam, TeamID
+from typing import Dict
 
 app = FastAPI()
 
@@ -48,8 +49,23 @@ def generate_opportunities(control, cap, total_range):
   opportunities = random.sample(range(1, total_range + 1), min(control // 10, cap))
   return opportunities
 
-@app.post("/game/")
-def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
+@app.post("/game/", status_code=status.HTTP_200_OK, response_model=Dict[str, Dict], responses={
+    404: {"Descripción": "Uno o ninguno de los equipos fueron encontrados", "model": Dict[str, str]},
+    500: {"Descripción": "Error interno del servidor o no pudo configurar equipos", "model": Dict[str, str]}
+})
+def game(team1_json: TeamID = Body(..., description="Datos de JSON para el equipo 1, incluidos el nombre y las identificaciones de jugadores"), 
+         team2_json: TeamID = Body(..., description="Datos de JSON para el equipo 2, incluidos el nombre y las identificaciones de jugadores")):
+  """
+  Comienza un juego entre dos equipos definidos en los cuerpos de solicitud.Calcula las oportunidades de objetivos,
+  genera eventos de partidos y determina el puntaje final basado en las estadísticas y habilidades de los equipos.
+
+  - ** Team1_json **: Datos JSON para el primer equipo, incluidos el nombre del equipo y las ID de jugador.
+  - ** Team2_json **: Datos JSON para el segundo equipo, incluido el nombre del equipo y las ID de jugador.
+
+  ### Respuestas
+  -** 200 OK **: Devuelve un resumen del juego, incluidos eventos minuciosos por minuto, eventos de equipo específicos y el puntaje final.
+  - ** 404 no encontrado **: uno o ambos cuerpos de solicitud están vacíos o no se encuentran.
+  - ** 500 Error del servidor interno **: Error al configurar equipos o comunicarse con el servidor de jugadores.  """
   if not team1_json or not team2_json:
     raise HTTPException(status_code=404, detail="NOT FOUND")
 
