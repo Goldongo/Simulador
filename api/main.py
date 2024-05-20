@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Body
 import random
-from schemas import Team, setUpTeam
+from schemas import Team, setUpTeam, TeamID
 
 app = FastAPI()
 
@@ -45,10 +45,10 @@ def check_lines(team, situation):
   return lines, weights
 
 @app.post("/game/")
-def game(team1_json: Team = Body(...), team2_json: Team = Body(...)):
+def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
 
   if not team1_json or not team2_json:
-    raise HTTPException(status_code=404, detail="One or both teams not found")
+    raise HTTPException(status_code=404, detail="NOT FOUND")
 
   team1 = setUpTeam(team1_json)
   team2 = setUpTeam(team2_json)
@@ -111,6 +111,7 @@ def game(team1_json: Team = Body(...), team2_json: Team = Body(...)):
         events.append(event)
         teamEvent.append(f"Gol {goalscorer.name}, {time}")
         teamEvent.append(f"Asistencia {Assistant.name}")
+        output["team1_events"].append(teamEvent)
       else:
         BlockLine = random.choices(deTeam2Lines, deTeam2Weights)[0]
         Block = random.choice(team2.lines[BlockLine])
@@ -121,7 +122,6 @@ def game(team1_json: Team = Body(...), team2_json: Team = Body(...)):
                             f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
           event = random.choice(possibilities)
         events.append(event)
-      output["team1_events"].append(teamEvent)
 
     if randNum in team2Opportunities:
       teamEvent = []
@@ -143,6 +143,7 @@ def game(team1_json: Team = Body(...), team2_json: Team = Body(...)):
         events.append(event)
         teamEvent.append(f"Gol {goalscorer.name}, {time}")
         teamEvent.append(f"Asistencia {Assistant.name}")
+        output["team2_events"].append(teamEvent)
       else:
         BlockLine = random.choices(deTeam1Lines, deTeam1Weights)[0]
         Block = random.choice(team1.lines[BlockLine])
@@ -153,7 +154,6 @@ def game(team1_json: Team = Body(...), team2_json: Team = Body(...)):
                             f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
           event = random.choice(possibilities)
         events.append(event)
-      output["team2_events"].append(teamEvent)
 
     if events:
       output["timeline"][f"minuto_{time}"] = events
@@ -162,3 +162,7 @@ def game(team1_json: Team = Body(...), team2_json: Team = Body(...)):
 
   output["final_score"] = {team1.name: score[0], team2.name: score[1]}
   return output
+
+if __name__ == "__main__":
+  import uvicorn
+  uvicorn.run(app, host="127.0.0.1", port=8001)
