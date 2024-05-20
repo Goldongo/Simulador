@@ -44,9 +44,12 @@ def check_lines(team, situation):
   weights = [weights_map[situation][line] for line in lines]
   return lines, weights
 
+def generate_opportunities(control, cap, total_range):
+  opportunities = random.sample(range(1, total_range + 1), min(control // 10, cap))
+  return opportunities
+
 @app.post("/game/")
 def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
-
   if not team1_json or not team2_json:
     raise HTTPException(status_code=404, detail="NOT FOUND")
 
@@ -65,19 +68,19 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
 
   score = [0, 0]
 
-  team1Opportunities = random.sample(range(1, 100), team1.control // 10)
-  team2Opportunities = random.sample(range(1, 100), team2.control // 10)
+  opportunities_cap = 50  # Maximum opportunities per team
+  total_opportunities_range = 100
 
-  while no_repeat(team1Opportunities, team2Opportunities):
-    team1Opportunities = random.sample(range(1, 100), team1.control // 10)
-    team2Opportunities = random.sample(range(1, 100), team2.control // 10)
+  team1Opportunities = generate_opportunities(team1.control, opportunities_cap, total_opportunities_range)
+  team2Opportunities = generate_opportunities(team2.control, opportunities_cap, total_opportunities_range)
 
-  team1Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10)
-  team2Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10)
+  max_attacks_per_team = 50
+  team1_attacks_limit = min(BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10, max_attacks_per_team)
+  team2_attacks_limit = min(BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10, max_attacks_per_team)
 
-  while no_repeat(team1Attacks, team2Attacks):
-    team1Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10)
-    team2Attacks = random.sample(range(1, 100), BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10)
+  team1Attacks = random.sample(range(1, total_opportunities_range + 1), team1_attacks_limit)
+  team2Attacks = random.sample(range(1, total_opportunities_range + 1), team2_attacks_limit)
+
 
   time = 0
 
@@ -91,6 +94,7 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
   while time < regularTime:
     randNum = random.randint(1, 100)
     events = []
+    
     if randNum in team1Opportunities:
       teamEvent = []
       event = f"{team1.name} tiene la posesión"
@@ -105,8 +109,6 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
         score[0] += 1
         goalscorerLine = random.choices(atTeam1Lines, atTeam1Weights)[0]
         goalscorer = random.choice(team1.lines[goalscorerLine])
-        while goalscorer.name == Assistant.name:
-          goalscorer = random.choice(team1.lines[goalscorerLine])
         event = f"GOOOOOL del {team1.name}!!! {goalscorer.name}"
         events.append(event)
         teamEvent.append(f"Gol {goalscorer.name}, {time}")
@@ -119,7 +121,7 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
           event = f"Gran atajada de {Block.name}!!!"
         else:
           possibilities = [f"Gran corte de {Block.name}!!!", f"Intercepción de {Block.name}!!!",
-                            f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
+                           f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
           event = random.choice(possibilities)
         events.append(event)
 
@@ -137,8 +139,6 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
         score[1] += 1
         goalscorerLine = random.choices(atTeam2Lines, atTeam2Weights)[0]
         goalscorer = random.choice(team2.lines[goalscorerLine])
-        while goalscorer.name == Assistant.name:
-          goalscorer = random.choice(team2.lines[goalscorerLine])
         event = f"GOOOOOL del {team2.name}!!! {goalscorer.name}"
         events.append(event)
         teamEvent.append(f"Gol {goalscorer.name}, {time}")
@@ -151,7 +151,7 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
           event = f"Gran atajada de {Block.name}!!!"
         else:
           possibilities = [f"Gran corte de {Block.name}!!!", f"Intercepción de {Block.name}!!!",
-                            f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
+                           f"Despeje de {Block.name}!!!", f"Bloqueo de {Block.name}!!!", f"Recuperación de {Block.name}!!!"]
           event = random.choice(possibilities)
         events.append(event)
 
