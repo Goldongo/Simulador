@@ -49,7 +49,7 @@ def generate_opportunities(control, cap, total_range):
   opportunities = random.sample(range(1, total_range + 1), min(control // 10, cap))
   return opportunities
 
-@app.post("/game/", status_code=status.HTTP_200_OK, response_model=Dict[str, Dict], responses={
+@app.post("/game/", responses={
     404: {"Descripción": "Uno o ninguno de los equipos fueron encontrados", "model": Dict[str, str]},
     500: {"Descripción": "Error interno del servidor o no pudo configurar equipos", "model": Dict[str, str]}
 })
