@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Body
 import random
 from fastapi.middleware.cors import CORSMiddleware
-from .schemas import Team, setUpTeam, TeamID
+from .schemas import TeamID, setUpTeam
 
 app = FastAPI()
 
@@ -20,9 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-def no_repeat(array1, array2):
-  return not set(array1).intersection(set(array2))
 
 ATT_WEIGHTS = {
   "GK": 0.1,
@@ -95,9 +92,11 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
   team1_attacks_limit = min(BASE_ATTACKS_NUM + (team1.attacking - team2.defending) // 10, max_attacks_per_team)
   team2_attacks_limit = min(BASE_ATTACKS_NUM + (team2.attacking - team1.defending) // 10, max_attacks_per_team)
 
+  team1_attacks_limit = min(team1_attacks_limit, total_opportunities_range)
+  team2_attacks_limit = min(team2_attacks_limit, total_opportunities_range)
+
   team1Attacks = random.sample(range(1, total_opportunities_range + 1), team1_attacks_limit)
   team2Attacks = random.sample(range(1, total_opportunities_range + 1), team2_attacks_limit)
-
 
   time = 0
 
@@ -179,4 +178,3 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
 
   output["final_score"] = {team1.name: score[0], team2.name: score[1]}
   return output
-
