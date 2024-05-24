@@ -47,7 +47,7 @@ class TeamID(BaseModel):
 
 def setUpTeam(team_id: TeamID):
   try:
-    response = requests.get("http://0.0.0.0:8000/players/")
+    response = requests.get("http://lb-prod-2030613354.us-east-1.elb.amazonaws.com:8001/players")
     response.raise_for_status()
     all_players = response.json()
     
