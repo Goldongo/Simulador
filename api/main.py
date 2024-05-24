@@ -56,7 +56,7 @@ def generate_opportunities(control, cap, total_range):
   opportunities = random.sample(range(1, total_range + 1), min(control // 10, cap))
   return opportunities
 
-@app.post("/game/")
+@app.post("/game")
 def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
   if not team1_json or not team2_json:
     raise HTTPException(status_code=404, detail="NOT FOUND")
