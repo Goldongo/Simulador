@@ -4,7 +4,7 @@ import requests
 from fastapi import HTTPException
 
 class Player(BaseModel):
-  id_: int
+  id: int
   name: str
   overall: int
   position: str
