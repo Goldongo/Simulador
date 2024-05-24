@@ -51,7 +51,7 @@ def setUpTeam(team_id: TeamID):
     response.raise_for_status()
     all_players = response.json()
     
-    team_players = [Player(**player) for player in all_players if player["id_"] in team_id.players]
+    team_players = [Player(**player) for player in all_players if player["id"] in team_id.players]
     
     return Team(name=team_id.name, players=team_players)
   except requests.RequestException as e:
