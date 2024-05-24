@@ -171,6 +171,3 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
   output["final_score"] = {team1.name: score[0], team2.name: score[1]}
   return output
 
-if __name__ == "__main__":
-  import uvicorn
-  uvicorn.run(app, host="127.0.0.1", port=8001)
