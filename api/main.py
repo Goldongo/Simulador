@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Body
 import random
-from schemas import Team, setUpTeam, TeamID
+from .schemas import Team, setUpTeam, TeamID
 
 app = FastAPI()
 
