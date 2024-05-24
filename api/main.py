@@ -74,7 +74,7 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
     "timeline": {},
     "team1_events": [],
     "team2_events": [],
-    "final_score": {}
+    "final_score": []
   }
 
   BASE_ATTACKS_NUM = 8
@@ -175,6 +175,5 @@ def game(team1_json: TeamID = Body(...), team2_json: TeamID = Body(...)):
       output["timeline"][f"minuto_{time}"] = events
 
     time += 1
-
-  output["final_score"] = {team1.name: score[0], team2.name: score[1]}
+  output["final_score"] = [{team1.name, score[0]},{team1, score[1]}]
   return output
